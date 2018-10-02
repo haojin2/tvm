@@ -419,7 +419,7 @@ def _fused_batch_norm():
     def _impl(inputs, attr, params):
         # Tensorflow: (data, gamma, beta, moving_mean, moving_variance)
         # NNVM:       (data, gamma, beta, moving_mean, moving_varience)
-        axis = 3
+        axis = 1
         need_cast = False
 
         if 'data_format' in attr:
@@ -450,7 +450,7 @@ def _batch_norm():
         # (data, gamma, beta, moving_mean, moving_var)
         new_inputs = [inputs[0], inputs[4], inputs[3], inputs[1], inputs[2]]
 
-        axis = 3
+        axis = 1
         if 'data_format' in attr:
             attr['data_format'] = attr['data_format'].decode("utf-8")
             if attr['data_format'] == 'NCHW':
