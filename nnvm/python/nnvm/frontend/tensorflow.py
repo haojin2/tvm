@@ -255,18 +255,19 @@ def _conv(opname):
             pad_v = _get_pad_pair(in_h, kernel_h, stride_h)
             pad_h = _get_pad_pair(in_w, kernel_w, stride_w)
 
-            if attr['data_format'] == 'NHWC':
-                inputs[0] = _sym.pad(data=inputs[0],
-                                     pad_width=((0, 0),
-                                                (pad_v[0], pad_v[1]),
-                                                (pad_h[0], pad_h[1]),
-                                                (0, 0)))
-            else:
-                inputs[0] = _sym.pad(data=inputs[0],
-                                     pad_width=((0, 0),
-                                                (0, 0),
-                                                (pad_v[0], pad_v[1]),
-                                                (pad_h[0], pad_h[1])))
+            if pad_v == (0, 0) and pad_h == (0, 0):
+                if attr['data_format'] == 'NHWC':
+                    inputs[0] = _sym.pad(data=inputs[0],
+                                         pad_width=((0, 0),
+                                                    (pad_v[0], pad_v[1]),
+                                                    (pad_h[0], pad_h[1]),
+                                                    (0, 0)))
+                else:
+                    inputs[0] = _sym.pad(data=inputs[0],
+                                         pad_width=((0, 0),
+                                                    (0, 0),
+                                                    (pad_v[0], pad_v[1]),
+                                                    (pad_h[0], pad_h[1])))
 
             attr['padding'] = [0, 0]
 
@@ -279,6 +280,7 @@ def _conv(opname):
             else:
                 attr['kernel_layout'] = 'HWOI' if attr['data_format'] == 'NHWC' else 'OIHW'
 
+        attr['data_format'] = 'NCHW'
         out = AttrCvt(
             op_name=_dimension_picker('conv'),
             transforms={
