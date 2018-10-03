@@ -220,7 +220,7 @@ def _alter_conv2d_layout(attrs, inputs, tinfos):
     copy_inputs = [s for s in inputs]
     new_attrs = {k : attrs[k] for k in attrs.keys()}
     # only optimize for NCHW, groups=1 conv
-    if attrs['layout'] != 'NCHW' or attrs.get_int("groups") != 1:
+    if attrs.get_int("groups") != 1:
         return None
 
     data = tinfos[0]
@@ -230,7 +230,7 @@ def _alter_conv2d_layout(attrs, inputs, tinfos):
     padding = ast.literal_eval(attrs['padding'])
     stride = ast.literal_eval(attrs['strides'])
 
-    wkl = _get_workload(data, kernel, stride, padding, data.dtype)
+    wkl = _get_workload(data, kernel, stride, padding, data.dtype, attrs['layout'])
     sch = _get_alter_layout_schedule(wkl)
     is_kernel_1x1 = isinstance(sch, AVXConv1x1Fwd)
     ic_bn, oc_bn = sch.ic_bn, sch.oc_bn
@@ -277,7 +277,7 @@ def _declaration_conv_NCHWc(data, kernel, num_filter, kernel_size, stride,
         wkl = _get_workload(tvm.placeholder((n, ic, h, w), dtype=data.dtype),
                             tvm.placeholder((num_filter, ic, kh, kw),
                                             dtype=kernel.dtype),
-                            stride, padding, out_dtype)
+                            stride, padding, out_dtype, layout)
         sch = _get_schedule_NCHWc(wkl, layout, out_layout)
     return _AVX_SCH_TO_DECL_FUNC[type(sch)](wkl, sch, data, kernel)
 
@@ -441,7 +441,7 @@ def schedule_conv2d_NCHWc(num_filter, kernel_size, stride, padding,
                                          stride, padding, conv_out.dtype)
                 sch = _get_schedule_NCHWc_int8(wkl, layout, out_layout)
             else:
-                wkl = _get_workload(original_data, original_kernel, stride, padding, conv_out.dtype)
+                wkl = _get_workload(original_data, original_kernel, stride, padding, conv_out.dtype, layout)
                 sch = _get_schedule_NCHWc(wkl, layout, out_layout)
             _AVX_SCH_TO_SCH_FUNC[type(sch)](s, wkl, sch, data_vec,
                                             kernel, conv_out, outs[0])

@@ -70,11 +70,16 @@ def conv2d_alter_layout(attrs, inputs, tinfos):
     return None
 
 
-def _get_workload(data, kernel, stride, padding, out_dtype):
+def _get_workload(data, kernel, stride, padding, out_dtype, layout='NCHW'):
     """ Get the workload structure. """
-    _, CI, IH, IW = [x.value for x in data.shape]
-    CO, _, KH, KW = [x.value for x in kernel.shape]
-    HPAD, WPAD, _, _ = get_pad_tuple(padding, kernel)
+    if layout == 'NHWC':
+        _, IH, IW, CI = [x.value for x in data.shape]
+        KH, KW, _, CO = [x.value for x in kernel.shape]
+        HPAD, WPAD, _, _ = get_pad_tuple(padding, (KH, KW))
+    else:
+        _, CI, IH, IW = [x.value for x in data.shape]
+        CO, _, KH, KW = [x.value for x in kernel.shape]
+        HPAD, WPAD, _, _ = get_pad_tuple(padding, kernel)
     if isinstance(stride, (tuple, list)):
         HSTR, WSTR = stride
     else:
